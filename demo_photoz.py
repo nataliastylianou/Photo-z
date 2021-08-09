@@ -1,7 +1,12 @@
+import matplotlib
+matplotlib.use('Agg')
+
 import GPz
 from numpy import *
 import matplotlib.pyplot as plt
 from scipy.stats import gaussian_kde
+import pylab as pb
+
 
 
 ########### Model options ###############
@@ -25,11 +30,11 @@ decorrelate = True          # preprocess the data using PCA [default=False]
 
 ########### Training options ###########
 
-dataPath = '../data/sdss_sample.csv'    # path to the data set, has to be in the following format m_1,m_2,..,m_k,e_1,e_2,...,e_k,z_spec
+dataPath = '/mnt/zfsusers/stylianou/project/sdss_sample.csv'    # path to the data set, has to be in the following format m_1,m_2,..,m_k,e_1,e_2,...,e_k,z_spec
                                         # where m_i is the i-th magnitude, e_i is its associated uncertainty and z_spec is the spectroscopic redshift
                                         # [required]
 
-maxIter = 2                   # maximum number of iterations [default=200]
+maxIter = 500                   # maximum number of iterations [default=200]
 maxAttempts = 50              # maximum iterations to attempt if there is no progress on the validation set [default=infinity]
 trainSplit = 0.2               # percentage of data to use for training
 validSplit = 0.2               # percentage of data to use for validation
@@ -90,17 +95,25 @@ print(('{0:1.7e}\t{1: 1.7e}\t{2: 1.7e}\t{3: 1.7e}\t{4: 1.7e}'.format(rmse[-1], m
 #print(Y[testing,:])
 
 # plot scatter plots for density and uncertainty
+#w = log(squeeze(sigma))
 f = plt.figure(1)
-#plt.scatter(Y[testing,:],mu,s=5,c=log(squeeze(sigma)), edgecolor='none')
-#plt.scatter(Y[testing,:],mu,s=5, edgecolor='')
+#plt.scatter(Y[testing,:], mu,s=5,c=data["w"], edgecolor='none')
 plt.scatter(Y[testing,:][0:100],mu[0:100],s=5, edgecolor=['none'])
-f.show()
+#c=data["w"]
+#f.show()
+#plt.show()
+pb.savefig("/mnt/zfsusers/stylianou/project/figures/fig_1.pdf")
+
 
 f = plt.figure(2)
 xy = hstack([Y[testing,:],mu]).T
 z = gaussian_kde(xy)(xy)
-plt.scatter(Y[testing,:],mu,c=z,s=5, edgecolor=['none'])
-f.show()
+plt.scatter(Y[testing,:], mu, s=5, edgecolor=['none'])
+#c=z
+#c=data["z"]
+#f.show()
+#plt.show()
+pb.savefig("/mnt/zfsusers/stylianou/project/figures/fig_2.pdf")
 
 # plot the change in metrics as functions of data percentage
 x = array(list(range(0,20+1)))*5
@@ -112,31 +125,46 @@ f = plt.figure(3)
 plt.plot(x.astype(int),rmse[ind-1].astype(int),'o-')
 plt.xlabel('Percentage of Data')
 plt.ylabel('RMSE')
-f.show()
+#f.show()
+#plt.show()
+pb.savefig("/mnt/zfsusers/stylianou/project/figures/demo_3.pdf")
+
 
 f = plt.figure(4)
 plt.plot(x,mll[ind-1],'o-')
 plt.xlabel('Percentage of Data')
 plt.ylabel('MLL')
-f.show()
+#f.show()
+#plt.show()
+pb.savefig("/mnt/zfsusers/stylianou/project/figures/demo_4.pdf")
+
 
 f = plt.figure(5)
 plt.plot(x,fr15[ind-1],'o-')
 plt.xlabel('Percentage of Data')
 plt.ylabel('FR15')
-f.show()
+#f.show()
+#plt.show()
+pb.savefig("/mnt/zfsusers/stylianou/project/figures/demo_5.pdf")
+
 
 f = plt.figure(6)
 plt.plot(x,fr05[ind-1],'o-')
 plt.xlabel('Percentage of Data')
 plt.ylabel('FR05')
-f.show()
+#f.show()
+#plt.show()
+pb.savefig("/mnt/zfsusers/stylianou/project/figures/demo_6.pdf")
+
 
 f = plt.figure(7)
 plt.plot(x,bias[ind-1],'o-')
 plt.xlabel('Percentage of Data')
 plt.ylabel('BIAS')
-f.show()
+#f.show()
+#plt.show()
+pb.savefig("/mnt/zfsusers/stylianou/project/figures/demo_7.pdf")
+
 
 # plot mean and standard deviation of different scores as functions of spectroscopic redshift using 20 bins
 f = plt.figure(8)
@@ -144,21 +172,29 @@ centers,means,stds = GPz.bin(Y[testing],Y[testing]-mu,20)
 plt.errorbar(centers,means,stds,fmt='o')
 plt.xlabel('Spectroscopic Redshift')
 plt.ylabel('Bias')
-f.show()
+#f.show()
+#plt.show()
+pb.savefig("/mnt/zfsusers/stylianou/project/figures/demo_8.pdf")
+
 
 f = plt.figure(9)
 centers,means,stds = GPz.bin(Y[testing],sqrt(modelV),20)
 plt.errorbar(centers,means,stds,fmt='o')
 plt.xlabel('Spectroscopic Redshift')
 plt.ylabel('Model Uncertainty')
-f.show()
+#f.show()
+#plt.show()
+pb.savefig("/mnt/zfsusers/stylianou/project/figures/demo_9.pdf")
 
 f = plt.figure(10)
 centers,means,stds = GPz.bin(Y[testing],sqrt(noiseV),20)
 plt.errorbar(centers,means,stds,fmt='o')
 plt.xlabel('Spectroscopic Redshift')
 plt.ylabel('Noise Uncertainty')
-f.show()
+#f.show()
+#plt.show()
+pb.savefig("/mnt/zfsusers/stylianou/project/figures/demo_10.pdf")
 
 # save output as a comma seperated values (mean,sigma,model_variance,noise_variance)
 savetxt(method+'_'+str(m)+'_'+csl_method+'.csv', array([mu,sigma,modelV,noiseV])[:,:,0].T, delimiter=',')
+
