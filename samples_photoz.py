@@ -7,14 +7,14 @@ from numpy import *
 import matplotlib.pyplot as plt
 from scipy.stats import gaussian_kde
 import pylab as pb
-
+from matplotlib.gridspec import GridSpec
 
 
 ########### Model options ###############
 
 method = 'VC'               # select method, options = GL, VL, GD, VD, GC and VC [required]
                             #
-m = 25                      # number of basis functions to use [required]
+m = 50                      # number of basis functions to use [required]
                             #
 joint = True                # jointly learn a prior linear mean function [default=true]
                             #
@@ -112,14 +112,13 @@ print(('{0:1.7e}\t{1: 1.7e}\t{2: 1.7e}\t{3: 1.7e}\t{4: 1.7e}'.format(rmse_sample
 # plot scatter plots for density and uncertainty
 f = plt.figure(1)
 #plt.scatter(Y[testing,:],mu,s=5,c=log(squeeze(sigma)), edgecolor='none')
-#plt.scatter(Y[testing,:],mu,s=5, edgecolor='')
 plt.scatter(Y_samples[testing,:][0:100],mu_samples[0:100],s=5, edgecolor=['none'])
 plt.xlabel('Spectroscopic Redshift')
 plt.ylabel('Photometric Redshift')
 plt.title('500 iterations - Trained on Samples and Tested on Samples')
 #f.show()
 #plt.show()
-pb.savefig("/mnt/zfsusers/stylianou/project/figures/samples_1.pdf")
+pb.savefig("/mnt/zfsusers/stylianou/project/figures/samples_1.pdf", dpi=300, bbox_inches = "tight")
 
 
 f = plt.figure(2)
@@ -132,7 +131,51 @@ plt.ylabel('Photometric Redshift')
 #c=z
 #f.show()
 #plt.show()
-pb.savefig("/mnt/zfsusers/stylianou/project/figures/samples_2.pdf")
+pb.savefig("/mnt/zfsusers/stylianou/project/figures/samples_2.pdf", dpi=300, bbox_inches = "tight")
+
+
+
+# marginal histograms of spectroscopic redshifts and photometric redshift estimates
+
+f = plt.figure(2.1)
+
+gs = GridSpec(4,4)
+
+ax_joint = f.add_subplot(gs[1:4,0:3])
+ax_marg_x = f.add_subplot(gs[0,0:3])
+ax_marg_y = f.add_subplot(gs[1:4,3])
+
+#xy = hstack([Y_samples[testing,:],mu_samples]).T
+#z = gaussian_kde(xy)(xy)
+
+
+ax_joint.scatter(Y_samples[testing,:], mu_samples, s=5, edgecolor=['none'])
+#im = ax_joint.scatter(Y_samples[testing,:], mu_samples, s=5, c=z, cmap=plt.cm.viridis, edgecolor=['none'])
+#f.colorbar(im, ax=ax_joint)
+
+
+ax_marg_x.hist(Y_samples[testing,:], bins=100)
+ax_marg_y.hist(mu_samples,orientation="horizontal", bins=100)
+
+# Turn off tick labels on marginals
+plt.setp(ax_marg_x.get_xticklabels(), visible=False)
+plt.setp(ax_marg_y.get_yticklabels(), visible=False)
+
+# Set labels on joint
+ax_joint.set_xlabel('Spectroscopic Redshift')
+ax_joint.set_ylabel('Photometric Redshift')
+
+# Set labels on marginals
+#ax_marg_y.set_xlabel('Marginal x label')
+#ax_marg_x.set_ylabel('Marginal y label')
+
+
+#ax_joint.set_title('2 iterations - Trained on Samples and Tested on Samples', loc='center')
+
+pb.savefig("/mnt/zfsusers/stylianou/project/figures/samples_2.1.pdf", dpi=300, bbox_inches = "tight")
+#pb.savefig("/mnt/zfsusers/stylianou/project/figures/samples_2.2.pdf", dpi=300, bbox_inches = "tight")
+
+
 
 # plot the change in metrics as functions of data percentage
 x = array(list(range(0,20+1)))*5
@@ -147,7 +190,7 @@ plt.ylabel('RMSE')
 plt.title('500 iterations - Trained on Samples and Tested on Samples')
 #f.show()
 #plt.show()
-pb.savefig("/mnt/zfsusers/stylianou/project/figures/samples_3.pdf")
+pb.savefig("/mnt/zfsusers/stylianou/project/figures/samples_3.pdf", dpi=300, bbox_inches = "tight")
 
 
 f = plt.figure(4)
@@ -157,7 +200,7 @@ plt.ylabel('MLL')
 plt.title('500 iterations - Trained on Samples and Tested on Samples')
 #f.show()
 #plt.show()
-pb.savefig("/mnt/zfsusers/stylianou/project/figures/samples_4.pdf")
+pb.savefig("/mnt/zfsusers/stylianou/project/figures/samples_4.pdf", dpi=300, bbox_inches = "tight")
 
 
 f = plt.figure(5)
@@ -167,7 +210,7 @@ plt.ylabel('FR15')
 plt.title('500 iterations - Trained on Samples and Tested on Samples')
 #f.show()
 #plt.show()
-pb.savefig("/mnt/zfsusers/stylianou/project/figures/samples_5.pdf")
+pb.savefig("/mnt/zfsusers/stylianou/project/figures/samples_5.pdf", dpi=300, bbox_inches = "tight")
 
 
 f = plt.figure(6)
@@ -177,7 +220,7 @@ plt.ylabel('FR05')
 plt.title('500 iterations - Trained on Samples and Tested on Samples')
 #f.show()
 #plt.show()
-pb.savefig("/mnt/zfsusers/stylianou/project/figures/samples_6.pdf")
+pb.savefig("/mnt/zfsusers/stylianou/project/figures/samples_6.pdf", dpi=300, bbox_inches = "tight")
 
 
 f = plt.figure(7)
@@ -187,7 +230,7 @@ plt.ylabel('BIAS')
 plt.title('500 iterations - Trained on Samples and Tested on Samples')
 #f.show()
 #plt.show()
-pb.savefig("/mnt/zfsusers/stylianou/project/figures/samples_7.pdf")
+pb.savefig("/mnt/zfsusers/stylianou/project/figures/samples_7.pdf", dpi=300, bbox_inches = "tight")
 
 
 # plot mean and standard deviation of different scores as functions of spectroscopic redshift using 20 bins
@@ -199,7 +242,7 @@ plt.ylabel('Bias')
 plt.title('500 iterations - Trained on Samples and Tested on Samples')
 #f.show()
 #plt.show()
-pb.savefig("/mnt/zfsusers/stylianou/project/figures/samples_8.pdf")
+pb.savefig("/mnt/zfsusers/stylianou/project/figures/samples_8.pdf", dpi=300, bbox_inches = "tight")
 
 
 f = plt.figure(9)
@@ -210,7 +253,8 @@ plt.ylabel('Model Uncertainty')
 plt.title('500 iterations - Trained on Samples and Tested on Samples')
 #f.show()
 #plt.show()
-pb.savefig("/mnt/zfsusers/stylianou/project/figures/samples_9.pdf")
+pb.savefig("/mnt/zfsusers/stylianou/project/figures/samples_9.pdf", dpi=300, bbox_inches = "tight")
+
 
 f = plt.figure(10)
 centers,means,stds = GPz.bin(Y_samples[testing],sqrt(noiseV_samples),20)
@@ -220,7 +264,19 @@ plt.ylabel('Noise Uncertainty')
 plt.title('500 iterations - Trained on Samples and Tested on Samples')
 #f.show()
 #plt.show()
-pb.savefig("/mnt/zfsusers/stylianou/project/figures/samples_10.pdf")
+pb.savefig("/mnt/zfsusers/stylianou/project/figures/samples_10.pdf", dpi=300, bbox_inches = "tight")
+
+
+# plot of bias as a function of magnitude 
+f = plt.figure(11)
+X_s = data[:, 2].reshape(n,1)
+centers,means,stds = GPz.bin(X_s[testing,:], X_s[testing,:] - mu_samples, 20)
+plt.errorbar(centers,means,stds,fmt='o')
+plt.xlabel('R-Band Magnitude')
+plt.ylabel('Bias')
+plt.title('500 iterations - Trained on Samples and Tested on Samples')
+pb.savefig("/mnt/zfsusers/stylianou/project/figures/samples_11.pdf", dpi=300, bbox_inches = "tight")
+
 
 # save output as a comma seperated values (mean,sigma,model_variance,noise_variance)
 savetxt(method+'_'+str(m)+'_'+csl_method+'.csv', array([mu_samples,sigma_samples,modelV_samples,noiseV_samples])[:,:,0].T, delimiter=',')

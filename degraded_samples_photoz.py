@@ -7,14 +7,14 @@ from numpy import *
 import matplotlib.pyplot as plt
 from scipy.stats import gaussian_kde
 import pylab as pb
-
+from matplotlib.gridspec import GridSpec
 
 
 ########### Model options ###############
 
 method = 'VC'               # select method, options = GL, VL, GD, VD, GC and VC [required]
                             #
-m = 25                      # number of basis functions to use [required]
+m = 50                      # number of basis functions to use [required]
                             #
 joint = True                # jointly learn a prior linear mean function [default=true]
                             #
@@ -62,11 +62,11 @@ X_samples[:, int(filters):] = log(X_samples[:, int(filters):])
 
 # Load degraded_samples
 # read data from file
-data = loadtxt(open(dataPath_degraded_samples,"rb"),delimiter=",")
+data_2 = loadtxt(open(dataPath_degraded_samples,"rb"),delimiter=",")
 
-X_degraded_samples = data[:, 1:6]
+X_degraded_samples = data_2[:, 1:6]
 n,d = X_degraded_samples.shape
-Y_degraded_samples = data[:, 0].reshape(n, 1)
+Y_degraded_samples = data_2[:, 0].reshape(n, 1)
 
 filters = d/2
 
@@ -115,7 +115,7 @@ model_degraded_samples.train(X_degraded_samples.copy(), Y_degraded_samples.copy(
 # model.train(model,X,Y,options)
 
 # use the model to generate predictions for the test set
-mu_degraded_samples,sigma_degraded_samples,modelV_degraded_samples,noiseV_degraded_samples,_ = model_degraded_samples.predict(X_degraded_samples[testing,:].copy())
+mu_degraded_samples,sigma_degraded_samples,modelV_degraded_samples,noiseV_degraded_samples,_ = model_degraded_samples.predict(X_samples[testing,:].copy())
 
 
 
@@ -161,22 +161,70 @@ plt.scatter(Y_samples[testing,:][0:100],mu_degraded_samples[0:100],s=5, edgecolo
 plt.xlabel('Spectroscopic Redshift')
 plt.ylabel('Photometric Redshift')
 plt.title('500 iterations - Trained on Degraded Samples and Tested on Samples')
-pb.savefig("/mnt/zfsusers/stylianou/project/figures/degraded_samples_1.pdf")
+pb.savefig("/mnt/zfsusers/stylianou/project/figures/degraded_samples_1.pdf", dpi=300, bbox_inches = "tight")
 
 
 f = plt.figure(2)
-xy = hstack([Y_samples[testing,:],mu_samples]).T
-xy = hstack([Y_samples[testing,:],mu_degraded_samples]).T
-z = gaussian_kde(xy)(xy)
+#xy_s = hstack([Y_samples[testing,:],mu_samples]).T
+#xy_ds = hstack([Y_samples[testing,:],mu_degraded_samples]).T
+#z_s = gaussian_kde(xy_s)(xy_s)
+#z_ds = gaussian_kde(xy_ds)(xy_ds)
 plt.scatter(Y_samples[testing,:],mu_samples,s=5, edgecolor=['none'])
 plt.scatter(Y_samples[testing,:],mu_degraded_samples,s=5, edgecolor=['none'])
-#c=z
+#c=z_s  &  c=z_ds
 #f.show()
 #plt.show()
 plt.xlabel('Spectroscopic Redshift')
 plt.ylabel('Photometric Redshift')
 plt.title('500 iterations - Trained on Degraded Samples and Tested on Samples')
-pb.savefig("/mnt/zfsusers/stylianou/project/figures/degraded_samples_2.pdf")
+pb.savefig("/mnt/zfsusers/stylianou/project/figures/degraded_samples_2.pdf", dpi=300, bbox_inches = "tight")
+
+
+
+# marginal histograms of spectroscopic redshifts and photometric redshift estimates
+
+f = plt.figure(2.1)
+
+gs = GridSpec(4,4)
+
+ax_joint = f.add_subplot(gs[1:4,0:3])
+ax_marg_x = f.add_subplot(gs[0,0:3])
+ax_marg_y = f.add_subplot(gs[1:4,3])
+
+#xy_s = hstack([Y_samples[testing,:],mu_samples]).T
+#xy_ds = hstack([Y_samples[testing,:],mu_degraded_samples]).T
+#z_s = gaussian_kde(xy_s)(xy_s)
+#z_ds = gaussian_kde(xy_ds)(xy_ds)
+
+ax_joint.scatter(Y_samples[testing,:], mu_samples, s=5, edgecolor=['none'])
+ax_joint.scatter(Y_samples[testing,:], mu_degraded_samples, s=5, edgecolor=['none'])
+#im = ax_joint.scatter(Y_samples[testing,:], mu_samples, s=5, cmap=plt.cm.viridis, edgecolor=['none'])
+#c=z_s  &  c=z_ds
+#f.colorbar(im, ax=ax_joint)
+
+ax_marg_x.hist(Y_samples[testing,:], bins=100)
+ax_marg_y.hist(mu_samples,orientation="horizontal", bins=100)
+ax_marg_y.hist(mu_degraded_samples,orientation="horizontal", bins=100)
+
+
+# Turn off tick labels on marginals
+plt.setp(ax_marg_x.get_xticklabels(), visible=False)
+plt.setp(ax_marg_y.get_yticklabels(), visible=False)
+
+# Set labels on joint
+ax_joint.set_xlabel('Spectroscopic Redshift')
+ax_joint.set_ylabel('Photometric Redshift')
+
+# Set labels on marginals
+#ax_marg_y.set_xlabel('Marginal x label')
+#ax_marg_x.set_ylabel('Marginal y label')
+
+#ax_joint.set_title('2 iterations - Trained on Samples and Tested on Samples', loc='center')
+
+pb.savefig("/mnt/zfsusers/stylianou/project/figures/samples_2.1.pdf", dpi=300, bbox_inches = "tight")
+#pb.savefig("/mnt/zfsusers/stylianou/project/figures/samples_2.2.pdf", dpi=300, bbox_inches = "tight")
+
+
 
 
 # plot the change in metrics as functions of data percentage
@@ -187,107 +235,129 @@ ind_s = x*len(rmse_samples) // 100
 ind_ds = x*len(rmse_degraded_samples) // 100
 
 f = plt.figure(3)
-plt.plot(x,rmse_samples[ind_s-1],'o-')
-plt.plot(x,rmse_degraded_samples[ind_ds-1],'o-')
+plt.plot(x,rmse_samples[ind_s-1],'o-', label="Samples")
+plt.plot(x,rmse_degraded_samples[ind_ds-1],'o-', label="Degraded Samples")
+plt.legend()
 plt.xlabel('Percentage of Data')
 plt.ylabel('RMSE')
 plt.title('500 iterations - Trained on Degraded Samples and Tested on Samples')
 #f.show()
 #plt.show()
-pb.savefig("/mnt/zfsusers/stylianou/project/figures/degraded_samples_3.pdf")
+pb.savefig("/mnt/zfsusers/stylianou/project/figures/degraded_samples_3.pdf", dpi=300, bbox_inches = "tight")
 
 
 f = plt.figure(4)
-plt.plot(x,mll_samples[ind_s-1],'o-')
-plt.plot(x,mll_degraded_samples[ind_ds-1],'o-')
+plt.plot(x,mll_samples[ind_s-1],'o-', label="Samples")
+plt.plot(x,mll_degraded_samples[ind_ds-1],'o-',  label="Degraded Samples")
+plt.legend()
 plt.xlabel('Percentage of Data')
 plt.ylabel('MLL')
 plt.title('500 iterations - Trained on Degraded Samples and Tested on Samples')
 #f.show()
 #plt.show()
-pb.savefig("/mnt/zfsusers/stylianou/project/figures/degraded_samples_4.pdf")
+pb.savefig("/mnt/zfsusers/stylianou/project/figures/degraded_samples_4.pdf", dpi=300, bbox_inches = "tight")
 
 
 f = plt.figure(5)
-plt.plot(x,fr15_samples[ind_s-1],'o-')
-plt.plot(x,fr15_degraded_samples[ind_ds-1],'o-')
+plt.plot(x,fr15_samples[ind_s-1],'o-', label="Samples")
+plt.plot(x,fr15_degraded_samples[ind_ds-1],'o-', label="Degraded Samples")
+plt.legend()
 plt.xlabel('Percentage of Data')
 plt.ylabel('FR15')
 plt.title('500 iterations - Trained on Degraded Samples and Tested on Samples')
 #f.show()
 #plt.show()
-pb.savefig("/mnt/zfsusers/stylianou/project/figures/degraded_samples_5.pdf")
+pb.savefig("/mnt/zfsusers/stylianou/project/figures/degraded_samples_5.pdf", dpi=300, bbox_inches = "tight")
 
 
 f = plt.figure(6)
-plt.plot(x,fr05_samples[ind_s-1],'o-')
-plt.plot(x,fr05_degraded_samples[ind_ds-1],'o-')
+plt.plot(x,fr05_samples[ind_s-1],'o-', label="Samples")
+plt.plot(x,fr05_degraded_samples[ind_ds-1],'o-',  label="Degraded Samples")
+plt.legend()
 plt.xlabel('Percentage of Data')
 plt.ylabel('FR05')
 plt.title('500 iterations - Trained on Degraded Samples and Tested on Samples')
 #f.show()
 #plt.show()
-pb.savefig("/mnt/zfsusers/stylianou/project/figures/degraded_samples_6.pdf")
+pb.savefig("/mnt/zfsusers/stylianou/project/figures/degraded_samples_6.pdf", dpi=300, bbox_inches = "tight")
 
 
 f = plt.figure(7)
-plt.plot(x,bias_samples[ind_s-1],'o-')
-plt.plot(x,bias_degraded_samples[ind_ds-1],'o-')
+plt.plot(x,bias_samples[ind_s-1],'o-', label="Samples")
+plt.plot(x,bias_degraded_samples[ind_ds-1],'o-', label="Degraded Samples")
+plt.legend()
 plt.xlabel('Percentage of Data')
 plt.ylabel('BIAS')
 plt.title('500 iterations - Trained on Degraded Samples and Tested on Samples')
 #f.show()
 #plt.show()
-pb.savefig("/mnt/zfsusers/stylianou/project/figures/degraded_samples_7.pdf")
+pb.savefig("/mnt/zfsusers/stylianou/project/figures/degraded_samples_7.pdf", dpi=300, bbox_inches = "tight")
 
 
 # plot mean and standard deviation of different scores as functions of spectroscopic redshift using 20 bins
 f = plt.figure(8)
 centers_s,means_s,stds_s = GPz.bin(Y_samples[testing],Y_samples[testing]-mu_samples,20)
 centers_ds,means_ds,stds_ds = GPz.bin(Y_samples[testing],Y_samples[testing]-mu_degraded_samples,20)
-plt.errorbar(centers_s,means_s,stds_s,fmt='o')
-plt.errorbar(centers_ds,means_ds,stds_ds,fmt='o')
+plt.errorbar(centers_s,means_s,stds_s,fmt='o', label= 'Samples')
+plt.errorbar(centers_ds,means_ds,stds_ds,fmt='o', label= 'Degraded Samples')
+plt.legend()
 plt.xlabel('Spectroscopic Redshift')
 plt.ylabel('Bias')
 plt.title('500 iterations - Trained on Degraded Samples and Tested on Samples')
 #f.show()
 #plt.show()
-pb.savefig("/mnt/zfsusers/stylianou/project/figures/degraded_samples_8.pdf")
+pb.savefig("/mnt/zfsusers/stylianou/project/figures/degraded_samples_8.pdf", dpi=300, bbox_inches = "tight")
 
 
 f = plt.figure(9)
 centers_s,means_s,stds_s = GPz.bin(Y_samples[testing],sqrt(modelV_samples),20)
 centers_ds,means_ds,stds_ds = GPz.bin(Y_samples[testing],sqrt(modelV_degraded_samples),20)
-plt.errorbar(centers_s,means_s,stds_s,fmt='o')
-plt.errorbar(centers_ds,means_ds,stds_ds,fmt='o')
+plt.errorbar(centers_s,means_s,stds_s,fmt='o', label= 'Samples')
+plt.errorbar(centers_ds,means_ds,stds_ds,fmt='o', label= 'Degraded Samples')
+plt.legend()
 plt.xlabel('Spectroscopic Redshift')
 plt.ylabel('Model Uncertainty')
 plt.title('500 iterations - Trained on Degraded Samples and Tested on Samples')
 #f.show()
 #plt.show()
-pb.savefig("/mnt/zfsusers/stylianou/project/figures/degraded_samples_9.pdf")
+pb.savefig("/mnt/zfsusers/stylianou/project/figures/degraded_samples_9.pdf", dpi=300, bbox_inches = "tight")
 
 f = plt.figure(10)
 centers_s,means_s,stds_s = GPz.bin(Y_samples[testing],sqrt(noiseV_samples),20)
 centers_ds,means_ds,stds_ds = GPz.bin(Y_samples[testing],sqrt(noiseV_degraded_samples),20)
-plt.errorbar(centers_s,means_s,stds_s,fmt='o')
-plt.errorbar(centers_ds,means_ds,stds_ds,fmt='o')
+plt.errorbar(centers_s,means_s,stds_s,fmt='o', label= 'Samples')
+plt.errorbar(centers_ds,means_ds,stds_ds,fmt='o', label= 'Degraded Samples')
+plt.legend()
 plt.xlabel('Spectroscopic Redshift')
 plt.ylabel('Noise Uncertainty')
 plt.title('500 iterations - Trained on Degraded Samples and Tested on Samples')
 #f.show()
 #plt.show()
-pb.savefig("/mnt/zfsusers/stylianou/project/figures/degraded_samples_10.pdf")
+pb.savefig("/mnt/zfsusers/stylianou/project/figures/degraded_samples_10.pdf", dpi=300, bbox_inches = "tight")
+
+
+# plot of bias as a function of magnitude 
+f = plt.figure(11)
+X_s = data[:, 2].reshape(n,1)
+centers_s,means_s,stds_s = GPz.bin(X_s[testing,:], X_s[testing,:] - mu_samples, 20)
+centers_ds,means_ds,stds_ds = GPz.bin(X_s[testing,:], X_s[testing,:] - mu_degraded_samples, 20)
+plt.errorbar(centers_s,means_s,stds_s,fmt='o', label= 'Samples')
+plt.errorbar(centers_ds,means_ds,stds_ds,fmt='o', label= 'Degraded Samples')
+plt.legend()
+plt.xlabel('R-Band Magnitude')
+plt.ylabel('Bias')
+plt.title('500 iterations - Trained on Samples and Tested on Samples')
+pb.savefig("/mnt/zfsusers/stylianou/project/figures/degraded_samples_12.pdf", dpi=300, bbox_inches = "tight")
 
 
 
 # plot mu_samples against mu_degraded_samples
-f = plt.figure(11)
+f = plt.figure(12)
 plt.scatter(mu_samples, mu_degraded_samples, s=5)
 plt.xlabel('Photometric Redshift of Samples')
 plt.ylabel('Photometric Redshift of Degraded Samples')
 plt.title('500 iterations - Trained on Degraded Samples and Tested on Samples')
-pb.savefig("/mnt/zfsusers/stylianou/project/figures/degraded_samples_11.pdf")
+pb.savefig("/mnt/zfsusers/stylianou/project/figures/degraded_samples_12.pdf", dpi=300, bbox_inches = "tight")
 
 
 # save output as a comma seperated values (mean,sigma,model_variance,noise_variance)
