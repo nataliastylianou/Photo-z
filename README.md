@@ -1,1 +1,1 @@
-# Redshifts
+# Photo-z
